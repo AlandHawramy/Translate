@@ -1,0 +1,275 @@
+/* Custom CSS for UI/UX enhancements and overrides not easily done with Tailwind */
+
+/* Font Family Imports */
+/* Roboto for Latin characters (English) */
+/* Noto Sans Arabic for Arabic script (Kurdish Sorani, Hawrami, Arabic) */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700&family=Roboto:wght@400;700&display=swap');
+
+body {
+    /* Base font-family. Browser will automatically pick Noto Sans Arabic for RTL scripts */
+    font-family: 'Roboto', 'Noto Sans Arabic', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Hides scrollbar for WebKit browsers (Chrome, Safari, Edge, Opera) */
+::-webkit-scrollbar {
+    display: none; /* Hides the scrollbar */
+    width: 0px; /* Ensures no width is taken by the scrollbar */
+}
+
+/* Hides scrollbar for Firefox */
+html {
+    scrollbar-width: none; /* Hides the scrollbar */
+}
+body {
+    scrollbar-width: none; /* Apply to body as well for consistency */
+}
+
+/* Background Pattern Animation (as provided in your example) */
+@keyframes patternMove {
+    0% { background-position: 0 0; }
+    100% { background-position: 50px 50px; }
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.015) 25%, transparent 25%),
+                      linear-gradient(-45deg, rgba(255, 255, 255, 0.015) 25%, transparent 25%),
+                      linear-gradient(45deg, transparent 75%, rgba(255, 255, 255, 0.015) 75%),
+                      linear-gradient(-45deg, transparent 75%, rgba(255, 255, 255, 0.015) 75%);
+    background-size: 60px 60px;
+    animation: patternMove 80s linear infinite;
+    z-index: -1;
+    opacity: 0.08;
+}
+
+/* Modal Transitions (for translation, history, favorites details) */
+.modal {
+    /* Using opacity and visibility for smooth fade transitions */
+    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+    background-color: rgba(17, 24, 39, 0.7); /* Tailwind gray-900 with transparency */
+    backdrop-filter: blur(8px); /* Blur the background content */
+}
+.modal.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none; /* Disable interaction when hidden */
+}
+.modal-content {
+    /* Scaling and slight movement for a pop-in effect */
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+.modal.hidden .modal-content {
+    transform: scale(0.95) translateY(10px);
+}
+
+/* Section Card Styling (for search results, history, favorites containers) */
+.section-card {
+    background: rgba(30, 41, 59, 0.7); /* Tailwind slate-800 with transparency */
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(55, 65, 81, 0.7); /* Tailwind slate-700 with transparency */
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+}
+.section-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    background: rgba(51, 65, 85, 0.75); /* Tailwind slate-700 lighter with transparency */
+}
+
+/* Gradient Button Styles (as provided in your example) */
+.view-more-btn {
+    --button-grad-start: #06B6D4; /* Tailwind cyan-500 */
+    --button-grad-end: #2563EB;   /* Tailwind blue-600 */
+
+    background-image: linear-gradient(to right, var(--button-grad-start) 0%, var(--button-grad-end) 50%, var(--button-grad-start) 100%);
+    background-size: 200% 100%;
+    background-position: 0% 50%;
+    transition: background-position 0.6s ease, transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 15px rgba(6,182,212,0.15);
+}
+
+.view-more-btn:hover {
+    background-position: 100% 50%;
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 8px 25px rgba(6,182,212,0.25);
+}
+
+/* Specific button overrides for language buttons */
+.language-btn {
+    background-color: #374151; /* Tailwind gray-700 */
+    color: #F3F4F6; /* Tailwind gray-100 */
+    text-align: left; /* Ensure text alignment for Kurdish/Arabic is handled by JS `dir` attribute later */
+    display: flex; /* For icon alignment */
+    justify-content: space-between; /* Space out text and icon */
+    align-items: center;
+}
+.language-btn:hover {
+    background-color: #4b5563; /* Tailwind gray-600 */
+}
+
+/* RTL / LTR for main input field and search results list containers (but word span handles its own dir) */
+.rtl {
+    direction: rtl;
+    /* text-align: right; This is handled by JS on the span */
+}
+.ltr {
+    direction: ltr;
+    /* text-align: left; This is handled by JS on the span */
+}
+
+/* Common styling for all list items (search results, history, favorites) */
+/* The li itself remains LTR for layout consistency of word-span and delete-button */
+#searchResults ul li,
+#historyListDetailed li,
+#favoritesListDetailed li {
+    padding: 12px 16px;
+    border-bottom: 1px solid #374151; /* Tailwind gray-700 */
+    cursor: pointer;
+    color: #BFDBFE; /* Tailwind blue-200 */
+    transition: background-color 0.2s ease, color 0.2s ease;
+    display: flex; /* To align word span and delete button */
+    justify-content: space-between; /* Pushes word/span to left, button to right */
+    align-items: center;
+    direction: ltr; /* IMPORTANT: Ensure the flex container itself is LTR for consistent layout */
+}
+
+/* The span inside list items should handle its own text alignment based on language */
+#searchResults ul li span,
+#historyListDetailed li span,
+#favoritesListDetailed li span {
+    flex-grow: 1; /* Allow the span to take available space */
+    /* REMOVED: text-align: left;
+       Now, direction: rtl on the span will correctly align text to the right.
+       direction: ltr on the span will correctly align text to the left. */
+}
+
+
+#searchResults ul li:hover,
+#historyListDetailed li:hover,
+#favoritesListDetailed li:hover {
+    background-color: #2D3748; /* Tailwind gray-700 darker */
+    color: #93C5FD; /* Tailwind blue-300 */
+}
+
+#searchResults ul li:last-child,
+#historyListDetailed li:last-child,
+#favoritesListDetailed li:last-child {
+    border-bottom: none; /* Remove border on last item */
+}
+
+/* Styling for the delete button within lists */
+.delete-button {
+    background-color: transparent; /* No background */
+    color: #DC2626; /* Red color for trash icon */
+    border: none;
+    padding: 5px; /* Smaller padding for icon button */
+    border-radius: 50%; /* Make it round */
+    font-size: 1.2em; /* Adjust icon size */
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    flex-shrink: 0; /* Prevent button from shrinking */
+    margin-left: 10px; /* Space between word and button */
+}
+.delete-button:hover {
+    background-color: rgba(220, 38, 38, 0.2); /* Light red background on hover */
+    transform: scale(1.1); /* Slightly enlarge on hover */
+}
+
+/* Styling for the heart icon in translation details */
+#pinIcon.active {
+    color: #EF4444; /* Tailwind red-500 */
+}
+
+/* Custom Alert styling for notification */
+#customAlert.show {
+    opacity: 1;
+}
+
+/* Max height for scrollable modals to prevent overflow on smaller screens */
+.max-h-screen-80 {
+    max-height: 80vh; /* 80% of viewport height */
+}
+
+/* New style for individual translation items within the modal */
+.translation-item {
+    background-color: #2D3748; /* Tailwind gray-800 darker */
+    border: 1px solid #374151; /* Tailwind gray-700 */
+    border-radius: 0.5rem; /* rounded-lg */
+    padding: 1rem; /* p-4 */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* shadow-md */
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    text-align: center; /* Center align text inside translation item */
+    margin-bottom: 0.75rem; /* Matches Tailwind's space-y-3 */
+}
+.translation-item:last-child {
+    margin-bottom: 0; /* No margin-bottom on the last one if parent uses space-y */
+}
+
+.translation-item:hover {
+    background-color: #374151; /* Slightly lighter gray on hover */
+    transform: translateY(-2px); /* Subtle lift */
+}
+
+/* Text alignment for RTL text content in description */
+.rtl-text-align {
+    text-align: right;
+    direction: rtl;
+}
+
+/* Styles for Custom Confirmation Modal */
+#confirmationModal .modal-content {
+    padding: 1.5rem; /* Adjust padding */
+}
+#confirmationModal #confirmationMessage {
+    line-height: 1.5; /* Improve readability */
+}
+#confirmationModal #confirmYesBtn,
+#confirmationModal #confirmNoBtn {
+    /* Specific button styles for confirmation modal */
+    background-image: none; /* Remove gradient for these buttons */
+    box-shadow: none; /* Remove shadow for these buttons */
+    transform: none; /* Remove transform for these buttons */
+    transition: background-color 0.2s ease; /* Simple hover transition */
+}
+#confirmationModal #confirmYesBtn:hover {
+    background-color: #B91C1C; /* Darker red on hover */
+    transform: none;
+    box-shadow: none;
+}
+#confirmationModal #confirmNoBtn {
+    background-color: #4B5563; /* Tailwind gray-600 */
+}
+#confirmationModal #confirmNoBtn:hover {
+    background-color: #374151; /* Tailwind gray-700 */
+    transform: none;
+    box-shadow: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #languageMenu {
+        width: 80%; /* Wider sidebar on smaller screens */
+    }
+    .modal-content {
+        width: 95%; /* Modals take more width on mobile */
+        padding: 1rem; /* Reduced padding for modals on mobile from p-6 to p-4 equivalent */
+    }
+    #searchInput {
+        margin: 0 8px; /* Reduce horizontal margin for search input */
+    }
+    header {
+        padding: 10px; /* Smaller padding on header */
+    }
+    .translation-details #detailWord {
+        font-size: 1.75rem; /* Adjust heading size for smaller screens */
+    }
+    main {
+        padding: 1rem; /* Reduced padding for main content area on mobile from p-6 to p-4 equivalent */
+    }
+}

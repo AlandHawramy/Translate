@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ku" dir="ltr"> <!-- Default LTR for initial English. dir will be updated by JS -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فەرهەنگ - وەرگێڕی وشەکان</title>
+    <!-- Tailwind CSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- Font Awesome CDN for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Custom CSS for unique styles (like background pattern, scrollbar, specific transitions) -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-900 text-gray-200 min-h-screen flex flex-col relative font-sans">
+
+    <!-- Header / Navbar -->
+    <header class="bg-gradient-to-r from-blue-700 to-cyan-600 p-4 flex items-center justify-between shadow-lg sticky top-0 z-20">
+        <!-- Menu Button (Hamburger Icon) -->
+        <button id="menuButton" class="text-white text-2xl p-2 rounded-md hover:bg-white hover:bg-opacity-20 transition duration-300 focus:outline-none focus:ring-2 focus:ring-blue-300">
+            <i class="fas fa-bars"></i>
+        </button>
+        <!-- Search Input Field -->
+        <input type="text" id="searchInput" placeholder="Search in English..."
+               class="flex-grow p-3 rounded-lg border border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-300 bg-gray-800 text-gray-200 placeholder-gray-400 mx-4 transition duration-300 shadow-md ltr"
+               oninput="searchWordsDebounced()">
+        <!-- History Button -->
+        <button id="historyButton" class="text-white text-2xl p-2 rounded-md hover:bg-white hover:bg-opacity-20 transition duration-300 focus:outline-none focus:ring-2 focus:ring-blue-300">
+            <i class="fas fa-history"></i>
+        </button>
+    </header>
+
+    <!-- Language Selector Menu (Sidebar) -->
+    <!-- Initial classes: -translate-x-full (hidden left), left-0 (default position left). JS will change these for RTL -->
+    <nav id="languageMenu" class="fixed top-0 h-full w-64 bg-gray-800 shadow-xl transform transition-transform duration-300 z-30 flex flex-col p-6 space-y-4 rounded-r-lg left-0 -translate-x-full">
+        <h2 class="text-2xl font-bold text-white mb-6 border-b border-gray-700 pb-3">زمانەکان</h2>
+        <button onclick="setLanguage('english')" class="language-btn text-left p-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition duration-200 ease-in-out view-more-btn">
+            ئینگلیزی <i class="fas fa-chevron-right float-right mt-1"></i>
+        </button>
+        <button onclick="setLanguage('sorani')" class="language-btn text-left p-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition duration-200 ease-in-out view-more-btn">
+            کوردی سۆرانی <i class="fas fa-chevron-right float-right mt-1"></i>
+        </button>
+        <button onclick="setLanguage('hawrami')" class="language-btn text-left p-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition duration-200 ease-in-out view-more-btn">
+            کوردی هەورامی <i class="fas fa-chevron-right float-right mt-1"></i>
+        </button>
+        <button onclick="setLanguage('arabic')" class="language-btn text-left p-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition duration-200 ease-in-out view-more-btn">
+            عەرەبی <i class="fas fa-chevron-right float-right mt-1"></i>
+        </button>
+        <button onclick="showFavoritesDetails()" class="language-btn text-left p-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition duration-200 ease-in-out view-more-btn">
+            وشەی دڵخواز <i class="fas fa-heart float-right mt-1"></i>
+        </button>
+        <!-- New Developer Button -->
+        <button onclick="showDeveloperDetails()" class="language-btn text-left p-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-white transition duration-200 ease-in-out view-more-btn">
+            گەشەپدەر <i class="fas fa-code float-right mt-1"></i>
+        </button>
+        <button onclick="hideAllModalsAndSidebars()" class="mt-auto p-3 rounded-lg bg-red-600 hover:bg-red-700 text-white transition duration-300 ease-in-out view-more-btn">
+            <i class="fas fa-times"></i> <!-- Icon only -->
+        </button>
+    </nav>
+
+    <!-- Overlay for when sidebar/modal is open -->
+    <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 z-20 hidden transition-opacity duration-300 opacity-0" onclick="hideAllModalsAndSidebars()"></div>
+
+    <!-- Main Content Area - Search Results -->
+    <main class="flex-grow p-6 flex flex-col items-center">
+        <div id="searchResults" class="w-full max-w-2xl bg-gray-800 rounded-lg shadow-xl p-4 section-card mb-6">
+            <ul class="list-none p-0">
+                <!-- Search results will be displayed here -->
+            </ul>
+        </div>
+    </main>
+
+    <!-- Translation Details Modal -->
+    <div id="translationDetails" class="fixed inset-0 flex items-center justify-center p-4 z-40 modal hidden">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-lg modal-content section-card">
+            <div class="flex justify-between items-center mb-4 pb-4 border-b border-gray-700" dir="ltr"> <!-- Force LTR layout for header -->
+                <button onclick="goBack()" class="text-blue-400 hover:text-blue-300 transition duration-200 text-lg focus:outline-none">
+                    <i class="fas fa-arrow-left"></i> <!-- Icon only -->
+                </button>
+                <!-- Word in the middle, its direction changes based on language -->
+                <h3 id="detailWord" class="text-3xl font-bold text-cyan-400 text-center flex-grow mx-2"></h3>
+                <button onclick="toggleFavorite()" class="text-xl p-2 rounded-full hover:bg-gray-700 transition duration-200 focus:outline-none">
+                    <i id="pinIcon" class="fas fa-heart text-gray-500"></i> <!-- Changed to heart icon -->
+                </button>
+            </div>
+            <div class="space-y-3"> <!-- Added space-y for consistent spacing between translation items -->
+                <div class="translation-item">
+                    <strong class="text-blue-400 block mb-1">English</strong> <span id="englishTranslation" class="text-gray-300 text-center block"></span>
+                </div>
+                <div class="translation-item">
+                    <strong class="text-blue-400 block mb-1">سۆرانی</strong> <span id="soraniTranslation" class="text-gray-300 text-center block"></span>
+                </div>
+                <div class="translation-item">
+                    <strong class="text-blue-400 block mb-1">هەورامی</strong> <span id="hawramiTranslation" class="text-gray-300 text-center block"></span>
+                </div>
+                <div class="translation-item">
+                    <strong class="text-blue-400 block mb-1">عەرەبی</strong> <span id="arabicTranslation" class="text-gray-300 text-center block"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Details Modal -->
+    <div id="historyDetails" class="fixed inset-0 flex items-center justify-center p-4 z-40 modal hidden">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-lg modal-content section-card max-h-screen-80 overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 pb-4 border-b border-gray-700" dir="ltr"> <!-- Force LTR layout for header -->
+                <button onclick="hideAllModalsAndSidebars()" class="text-blue-400 hover:text-blue-300 transition duration-200 text-lg focus:outline-none">
+                    <i class="fas fa-arrow-left"></i> <!-- Icon only -->
+                </button>
+                <h3 class="text-3xl font-bold text-cyan-400 text-center flex-grow">مێژووی گەڕان</h3>
+                <button onclick="confirmClearHistory()" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 ease-in-out view-more-btn focus:outline-none">
+                    <i class="fas fa-trash-alt"></i> <!-- Icon only -->
+                </button>
+            </div>
+            <ul id="historyListDetailed" class="list-none p-0 divide-y divide-gray-700">
+                <!-- History items will be displayed here -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- Favorites Details Modal -->
+    <div id="favoritesDetails" class="fixed inset-0 flex items-center justify-center p-4 z-40 modal hidden">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-lg modal-content section-card max-h-screen-80 overflow-y-auto">
+            <div class="flex justify-between items-center mb-4 pb-4 border-b border-gray-700" dir="ltr"> <!-- Force LTR layout for header -->
+                <button onclick="hideAllModalsAndSidebars()" class="text-blue-400 hover:text-blue-300 transition duration-200 text-lg focus:outline-none">
+                    <i class="fas fa-arrow-left"></i> <!-- Icon only -->
+                </button>
+                <h3 class="text-3xl font-bold text-cyan-400 text-center flex-grow">وشە دڵخوازەکان</h3>
+                <button onclick="confirmClearFavorites()" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 ease-in-out view-more-btn focus:outline-none">
+                    <i class="fas fa-trash-alt"></i> <!-- Icon only -->
+                </button>
+            </div>
+            <ul id="favoritesListDetailed" class="list-none p-0 divide-y divide-gray-700">
+                <!-- Favorites items will be displayed here -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- Developer Details Modal -->
+    <div id="developerDetails" class="fixed inset-0 flex items-center justify-center p-4 z-40 modal hidden">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-md modal-content section-card text-center">
+            <div class="flex justify-between items-center mb-4 pb-4 border-b border-gray-700" dir="ltr"> <!-- Force LTR layout for header -->
+                <button onclick="hideAllModalsAndSidebars()" class="text-blue-400 hover:text-blue-300 transition duration-200 text-lg focus:outline-none">
+                    <i class="fas fa-arrow-left"></i> <!-- Icon only -->
+                </button>
+                <h3 class="text-3xl font-bold text-cyan-400 flex-grow">گەشەپدەر</h3>
+                <!-- No other buttons on the right for this modal header -->
+            </div>
+            <div class="space-y-4 pt-4">
+                <div class="w-24 h-24 mx-auto rounded-full bg-gray-700 flex items-center justify-center border-2 border-cyan-500 overflow-hidden">
+                    <img src="https://alndws.netlify.app/assets/img/hero-img.png" alt="Developer Logo" class="w-full h-full object-cover p-1">
+                </div>
+                <h4 class="text-2xl font-bold text-white mt-4 font-roboto">Aland Wasim</h4> <!-- Font Roboto for English name -->
+                <p class="text-blue-300 text-lg font-noto-arabic">گەشەپەدری وێب و دیزاینەر</p> <!-- Font Noto Sans Arabic for Kurdish -->
+                <p class="text-gray-300 leading-relaxed text-sm max-w-sm mx-auto rtl-text-align font-noto-arabic">
+                    ئەم وێبە بۆ ئاسانکاری بەڕێوەبردنی پڕۆژەیەکی پرۆگرام ئامادەکراوە. بە پشتیوانی خودا پەرەی پێدراوە و خراوەتە بەردەست.
+                    هیوادارم ببێتە مایەی سوود و قبووڵبوون لای خوای گەورە و بەهیوای سوود و ئاسانکاری بۆ پڕۆگرام.
+                </p>
+                <div class="border-t border-gray-700 pt-4 mt-4">
+                    <p class="text-gray-400 mb-3 font-noto-arabic">بۆ هەر پێشنیار، گلمەیی یان کێشەیەک:</p>
+                    <a href="mailto:alandwasim@example.com" class="view-more-btn inline-block bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition duration-300 font-noto-arabic">
+                        پەیوەندی بکە
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Alert -->
+    <div id="customAlert" class="fixed top-8 left-1/2 transform -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 opacity-0 transition-opacity duration-300">
+        وشەکە دڵخواز کرا!
+    </div>
+
+    <!-- Custom Confirmation Modal -->
+    <div id="confirmationModal" class="fixed inset-0 flex items-center justify-center p-4 z-50 modal hidden">
+        <div class="bg-gray-800 rounded-lg shadow-2xl p-6 w-full max-w-sm modal-content section-card text-center">
+            <p id="confirmationMessage" class="text-lg text-gray-200 mb-6 font-noto-arabic"></p>
+            <div class="flex justify-around space-x-4">
+                <button id="confirmYesBtn" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 ease-in-out view-more-btn flex-grow font-noto-arabic">
+                    بەڵێ
+                </button>
+                <button id="confirmNoBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 ease-in-out view-more-btn flex-grow font-noto-arabic">
+                    نەخێر
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom JavaScript -->
+    <script src="data.js"></script> <!-- Load data.js FIRST -->
+    <script src="script.js"></script>
+</body>
+</html>
